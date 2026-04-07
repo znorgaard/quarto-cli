@@ -1,7 +1,7 @@
 /*
  * git-credential.ts
  *
- * Copyright (C) 2020-2022 Posit Software, PBC
+ * Copyright (C) 2025 Posit Software, PBC
  */
 
 import { which } from "./path.ts";
@@ -14,7 +14,7 @@ import { execProcess } from "./process.ts";
  */
 export async function gitCredentialForUrl(
   url: string,
-): Promise<HeadersInit | undefined> {
+): Promise<Record<string, string> | undefined> {
   try {
     let parsed: URL;
     try {
@@ -47,10 +47,10 @@ export async function gitCredentialForUrl(
         stderr: "piped",
       },
       input,
-      undefined,
-      undefined,
-      undefined,
-      5000, // 5 second timeout
+      undefined, // mergeOutput
+      undefined, // stderrFilter
+      undefined, // respectStreams
+      5000, // timeout (ms)
     );
 
     if (!result.success || !result.stdout) {
@@ -74,7 +74,8 @@ export async function gitCredentialForUrl(
 
     // Use TextEncoder to handle non-ASCII credentials safely
     const encoded = new TextEncoder().encode(`${username}:${password}`);
-    const base64 = btoa(String.fromCharCode(...encoded));
+    const binary = Array.from(encoded, (b) => String.fromCharCode(b)).join("");
+    const base64 = btoa(binary);
     return { "Authorization": `Basic ${base64}` };
   } catch {
     return undefined;
