@@ -6,6 +6,7 @@
 
 import { existsSync } from "../deno_ral/fs.ts";
 import { isWindows } from "../deno_ral/platform.ts";
+import { gitCredentialForUrl } from "../core/git-credential.ts";
 
 export interface ResolvedExtensionInfo {
   // The url to the resolved extension
@@ -243,7 +244,9 @@ function makeResolvers(
         return {
           url,
           urlFile: url.split("/").pop(),
-          response: fetch(url),
+          response: gitCredentialForUrl(url).then((headers) =>
+            fetch(url, headers ? { headers } : undefined)
+          ),
           owner: host.organization,
           subdirectory: urlProvider.archiveSubdir(host),
           learnMoreUrl: urlProvider.learnMoreUrl(host),
@@ -275,7 +278,9 @@ const unknownUrlResolver = (
 
   return {
     url: name,
-    response: fetch(name),
+    response: gitCredentialForUrl(name).then((headers) =>
+      fetch(name, headers ? { headers } : undefined)
+    ),
   };
 };
 
