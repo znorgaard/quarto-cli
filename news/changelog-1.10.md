@@ -19,6 +19,10 @@ All changes included in 1.10:
 
 - ([#14281](https://github.com/quarto-dev/quarto-cli/issues/14281)): Avoid creating a duplicate `.quarto_ipynb` file on preview startup for single-file Jupyter documents.
 
+### `quarto add`
+
+- ([#5827](https://github.com/quarto-dev/quarto-cli/issues/5827)): `quarto add` now supports installing extensions from private repositories by using git credential helpers for authentication. If your git client can access a repository (via `gh auth`, macOS Keychain, credential managers, etc.), `quarto add` can now install extensions from it.
+
 ### `quarto create`
 
 - ([#14250](https://github.com/quarto-dev/quarto-cli/issues/14250)): Fix `quarto create` producing read-only files when Quarto is installed via system packages (e.g., `.deb`). Files copied from installed resources now have user-write permission ensured.
