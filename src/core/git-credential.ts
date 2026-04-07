@@ -72,7 +72,10 @@ export async function gitCredentialForUrl(
       return undefined;
     }
 
-    return { "Authorization": `Basic ${btoa(`${username}:${password}`)}` };
+    // Use TextEncoder to handle non-ASCII credentials safely
+    const encoded = new TextEncoder().encode(`${username}:${password}`);
+    const base64 = btoa(String.fromCharCode(...encoded));
+    return { "Authorization": `Basic ${base64}` };
   } catch {
     return undefined;
   }

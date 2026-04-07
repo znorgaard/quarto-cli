@@ -25,7 +25,6 @@ unitTest("git-credential - returns undefined for empty string", async () => {
   assertEquals(result, undefined);
 });
 
-// deno-lint-ignore require-await
 unitTest("git-credential - returns headers or undefined for HTTPS URL", async () => {
   // This test verifies the function doesn't throw for a valid HTTPS URL.
   // It may return undefined (no credentials configured) or HeadersInit
