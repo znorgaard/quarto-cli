@@ -5,8 +5,26 @@
  */
 
 import { existsSync } from "../deno_ral/fs.ts";
+import { debug } from "../deno_ral/log.ts";
 import { isWindows } from "../deno_ral/platform.ts";
 import { gitCredentialForUrl } from "../core/git-credential.ts";
+
+async function fetchWithGitCredentials(url: string): Promise<Response> {
+  const credential = await gitCredentialForUrl(url);
+  if (!credential) {
+    return fetch(url);
+  }
+  const response = await fetch(url, { headers: credential.headers });
+  if (response.status === 401 || response.status === 403) {
+    debug(
+      `[git-credential] Credentials were found for ${url} but the server returned ${response.status}`,
+    );
+    await credential.reject();
+  } else {
+    await credential.approve();
+  }
+  return response;
+}
 
 export interface ResolvedExtensionInfo {
   // The url to the resolved extension
@@ -244,9 +262,7 @@ function makeResolvers(
         return {
           url,
           urlFile: url.split("/").pop(),
-          response: gitCredentialForUrl(url).then((headers) =>
-            fetch(url, headers ? { headers } : undefined)
-          ),
+          response: fetchWithGitCredentials(url),
           owner: host.organization,
           subdirectory: urlProvider.archiveSubdir(host),
           learnMoreUrl: urlProvider.learnMoreUrl(host),
@@ -278,9 +294,7 @@ const unknownUrlResolver = (
 
   return {
     url: name,
-    response: gitCredentialForUrl(name).then((headers) =>
-      fetch(name, headers ? { headers } : undefined)
-    ),
+    response: fetchWithGitCredentials(name),
   };
 };
 
