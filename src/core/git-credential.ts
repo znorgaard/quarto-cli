@@ -1,9 +1,10 @@
 /*
  * git-credential.ts
  *
- * Copyright (C) 2025 Posit Software, PBC
+ * Copyright (C) 2026 Posit Software, PBC
  */
 
+import { debug } from "../deno_ral/log.ts";
 import { which } from "./path.ts";
 import { execProcess } from "./process.ts";
 
@@ -46,12 +47,14 @@ export async function gitCredentialForUrl(
       "",
     ].join("\n");
 
+    debug(`[git-credential] Looking up credentials for ${parsed.protocol}//${parsed.host}${parsed.pathname}`);
     const result = await execProcess(
       {
         cmd: "git",
         args: ["credential", "fill"],
         stdout: "piped",
         stderr: "piped",
+        env: { ...Deno.env.toObject(), GIT_TERMINAL_PROMPT: "0" },
       },
       input,
       undefined, // mergeOutput
@@ -91,6 +94,7 @@ async function gitCredentialAction(
         args: ["credential", action],
         stdout: "piped",
         stderr: "piped",
+        env: { ...Deno.env.toObject(), GIT_TERMINAL_PROMPT: "0" },
       },
       input,
       undefined,
@@ -115,10 +119,11 @@ export function parseGitCredentialOutput(
   let password: string | undefined;
 
   for (const line of lines) {
-    const [key, ...valueParts] = line.split("=");
+    const trimmed = line.replace(/\r$/, "");
+    const [key, ...valueParts] = trimmed.split("=");
     const value = valueParts.join("=");
-    if (key === "username") username = value;
-    if (key === "password") password = value;
+    if (key.trim() === "username") username = value;
+    if (key.trim() === "password") password = value;
   }
 
   if (!username || !password) {

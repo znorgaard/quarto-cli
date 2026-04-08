@@ -1,7 +1,7 @@
 /*
  * git-credential.test.ts
  *
- * Copyright (C) 2025 Posit Software, PBC
+ * Copyright (C) 2026 Posit Software, PBC
  */
 import { unitTest } from "../test.ts";
 import { assert, assertEquals } from "testing/asserts";
@@ -88,6 +88,13 @@ unitTest("parseGitCredentialOutput - returns undefined for empty string", async 
 });
 
 // deno-lint-ignore require-await
+unitTest("parseGitCredentialOutput - handles Windows \\r\\n line endings", async () => {
+  const output = "protocol=https\r\nhost=github.com\r\nusername=testuser\r\npassword=testtoken\r\n";
+  const result = parseGitCredentialOutput(output);
+  assertEquals(result, { "Authorization": `Basic ${btoa("testuser:testtoken")}` });
+});
+
+// deno-lint-ignore require-await
 unitTest("parseGitCredentialOutput - handles non-ASCII credentials", async () => {
   const output = [
     "protocol=https",
@@ -97,12 +104,8 @@ unitTest("parseGitCredentialOutput - handles non-ASCII credentials", async () =>
     "",
   ].join("\n");
   const result = parseGitCredentialOutput(output);
-  assert(result !== undefined, "should return a result for non-ASCII credentials");
-  // Verify round-trip: build expected value the same way the implementation does
-  const encoded = new TextEncoder().encode("ユーザー:パスワード");
-  const binary = Array.from(encoded, (b) => String.fromCharCode(b)).join("");
-  const expectedBase64 = btoa(binary);
-  assertEquals(result, { "Authorization": `Basic ${expectedBase64}` });
+  // Hardcoded base64 of the UTF-8 encoding of "ユーザー:パスワード"
+  assertEquals(result, { "Authorization": "Basic 44Om44O844K244O8OuODkeOCueODr+ODvOODiQ==" });
 });
 
 unitTest("git-credential - returns headers or undefined for HTTPS URL", async () => {
